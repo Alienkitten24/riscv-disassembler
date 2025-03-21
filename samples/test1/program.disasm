@@ -1,0 +1,18 @@
+
+program.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00010054 <_start>:
+   10054:	004000ef          	jal	ra,10058 <main>
+
+00010058 <main>:
+   10058:	00100293          	addi	t0,zero,1
+   1005c:	00100313          	addi	t1,zero,1
+   10060:	006283b3          	add	t2,t0,t1
+   10064:	00100893          	addi	a7,zero,1
+   10068:	00038513          	addi	a0,t2,0
+   1006c:	00000073          	ecall
+   10070:	00a00893          	addi	a7,zero,10
+   10074:	00000073          	ecall

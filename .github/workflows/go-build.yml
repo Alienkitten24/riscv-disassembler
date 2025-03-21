@@ -1,0 +1,59 @@
+name: Go Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "stable"
+
+      - name: Build
+        run: go build -v ./...
+        
+  assembly-test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "stable"
+
+      - name: Build disassembler
+        run: go build -v ./cmd/disasm
+
+      - name: Run assembly tests
+        run: |
+          # Array of test directories to process
+          TEST_DIRS=("test1" "test2")
+
+          # Process each test directory
+          for test_dir in "${TEST_DIRS[@]}"; do
+            echo "Processing test directory: $test_dir"
+            
+            # Run disassembler on the test
+            echo "Running disassembler on $test_dir"
+            ./disasm "samples/$test_dir/program.elf" > "${test_dir}_output.disasm"
+            
+            # Compare output with expected output
+            echo "Comparing disassembly output for $test_dir"
+            diff -Z -B "samples/$test_dir/program.disasm" "${test_dir}_output.disasm"
+            if [ $? -ne 0 ]; then
+              echo "Disassembly output for $test_dir does not match expected output"
+              exit 1
+            else
+              echo "Disassembly test for $test_dir passed!"
+            fi
+          done
