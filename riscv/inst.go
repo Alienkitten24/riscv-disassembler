@@ -9,4 +9,5 @@ type Inst struct {
 	Rs1  string
 	Rs2  string
 	Imm  int32
+	Opcode string
 }
