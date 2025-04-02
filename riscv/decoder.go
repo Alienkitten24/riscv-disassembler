@@ -124,7 +124,7 @@ func readBitRange(start int, end int, bits []int) string {
 // convert bit string to int
 func bitStringToInt(bits string) int {
 	if bits == "" {
-		panic("Bits string is empty")
+		return ""
 	}
 	num, err := strconv.ParseInt(bits, 2, 0)
 	if err != nil {
