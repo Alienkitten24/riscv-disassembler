@@ -1,8 +1,6 @@
 package riscv
 import (
-	// "fmt"
 	"strconv"
-	// "reflect"
 )
 
 // InstDecoder handles decoding of RISC-V instructions
@@ -18,38 +16,20 @@ func NewInstDecoder() *InstDecoder {
 
 // Decode decodes a RISC-V instruction at the given address
 func (d *InstDecoder) Decode(addr uint32, buf []byte) Inst {
-	// inst := Inst{Addr: addr}
-
-	// TODO: Add your code here.
-	// fmt.Println(addr)
-	// for _, element := range buf {
-	// 	fmt.Printf("%x ", element)
-	// }
-	// fmt.Print()
-
-
+	
+	// convert buf []byte to bit array of 0s and 1s bits []int
 	bits := bytesToBits(buf)
-
-	// fmt.Println(readBitRange(0,31,bits))
 	
 	var destinationReg, funct3, funct7, sourceReg1, sourceReg2 string
 	var immediate int32
 
 	opcode := readBitRange(0,6,bits)
-	// funct3 = readBitRange(12,14,bits)
-	// funct7 = readBitRange(25,31,bits)
 	funct3 = "" 
 	funct7 = ""
 
-	// instId := instructionIdentifier{opcode, funct3, funct7} 
-	// instData := instructionMap[instId]	
-
-	// fmt.Println("LOW TEST")
-	// fmt.Println(instId)
-	// fmt.Println(instData)
-
 	instType := instructionTypeMap[opcode]
 
+	// read the 32 bits based on what type of instruction it is
 	switch instType{
 	case "R":
 		destinationReg = readBitRange(7,11,bits)
@@ -83,16 +63,11 @@ func (d *InstDecoder) Decode(addr uint32, buf []byte) Inst {
 		middleBits := bits[32-12:32-7] // grab the 'middle' 5 bits of the bit string
 		endBits := bits[0:32-25] // grab the 'last' 7 bits of the bit string
 		immBitStr := readBitRange(6,6,endBits) + readBitRange(0,0,middleBits) + readBitRange(0,5,endBits) + readBitRange(1,4,middleBits) + "0"
-		// fmt.Println("hello")
-		// fmt.Println(middleBits)
-		// fmt.Println(endBits)
-		// fmt.Println(immBitStr)
 		immNum, err := strconv.ParseInt(immBitStr, 2, 32)
 		if err != nil {
 			panic(err)
 		}
 		immediate = convert2sCompliment(immNum)
-		// fmt.Println(immediate)
 	case "U":
 		destinationReg = readBitRange(7,11,bits)
 		immNum, err := strconv.ParseInt(readBitRange(12,31,bits), 2, 32)
@@ -102,40 +77,24 @@ func (d *InstDecoder) Decode(addr uint32, buf []byte) Inst {
 		immediate = convert2sCompliment(immNum)
 	case "J":
 		destinationReg = readBitRange(7,11,bits)
-		// immBitStr := readBitRange(12,31,bits)
-		// immNum, err := strconv.ParseInt(immBitStr, 2, 32)
 		endBits := bits[0:32-12] // grab the 'last' 20 bits of the bit string
 		immBitStr := readBitRange(19,19,endBits) + readBitRange(0,7,endBits) + readBitRange(8,8,endBits) + readBitRange(9,18,endBits) + "0"
-		// fmt.Print("J hello")
-		// fmt.Println(endBits)
 		immNum, err := strconv.ParseInt(immBitStr, 2, 32)
-		// fmt.Println(reflect.TypeOf(immNum))
-		// fmt.Println(immNum)
 		if err != nil {
 			panic(err)
 		}
 		immediate = convert2sCompliment(immNum)
-		// fmt.Printf("ULTRA TEST %s = %d \n", immBitStr, immediate)
 	}
 
 	instId := instructionIdentifier{opcode, funct3, funct7} 
 	instData := instructionMap[instId]	
 
-	// fmt.Println("LOW TEST")
-	// fmt.Println(instId)
-	// fmt.Println(instData)
-	// fmt.Println("lowtest" + funct3 + funct7 + destinationReg)
-
 	inst := Inst{Addr: addr, Bin: bitsToUInt(bits), Op: instData.mnemonic, Rd: registerMap[bitStringToInt(destinationReg)], Rs1: registerMap[bitStringToInt(sourceReg1)], Rs2: registerMap[bitStringToInt(sourceReg2)], Imm: immediate, Opcode: opcode} 
-
-	// fmt.Println(inst)
-	// fmt.Println(instData)
-
-	// fmt.Println(registerMap[5])
 
 	return inst
 }
 
+// convert little endian bytes to bit data
 func bytesToBits(data []byte) []int {
 	bits := make([]int, len(data)*8)
 	for i, b := range data {
@@ -146,6 +105,7 @@ func bytesToBits(data []byte) []int {
 	return bits
 }
 
+// convert subarray of bit []int into a string
 func readBitRange(start int, end int, bits []int) string {
 	subBits := bits[len(bits)-end-1:len(bits)-start]	
 
@@ -164,7 +124,7 @@ func readBitRange(start int, end int, bits []int) string {
 // convert bit string to int
 func bitStringToInt(bits string) int {
 	if bits == "" {
-		return 0 // TODO REMOVE THIs
+		panic("Bits string is empty")
 	}
 	num, err := strconv.ParseInt(bits, 2, 0)
 	if err != nil {
@@ -184,6 +144,7 @@ func bitsToUInt(bits []int) uint32 {
 	return result
 }
 
+// converg value of binary to a 2s comp version
 func convert2sCompliment(val int64) int32 {
 	if val >= (1 << 20) { // If the 21st bit is set (negative number in two's complement)
 		val -= (1 << 21) // Subtract 2^21 to get the correct signed value
@@ -206,7 +167,7 @@ type instructionData struct {
 	instructionType string
 }
 
-// TODO FINISH WITH FENCE AND OTHERS
+// maps the opcode to the instruction type 
 var instructionTypeMap = map[string]string {
 	"0110111":  "U", // lui
 	"0010111":  "U", // auipc
@@ -217,10 +178,11 @@ var instructionTypeMap = map[string]string {
 	"0100011":  "S", // stores
 	"0010011":  "I", // imm arithmatic
 	"0110011":  "R", // reg arithmatic
-	"0001111":  "", 
+	// "0001111":  "", // fence calls 
 	"1110011":  "I", // sys calls
 }
 
+// maps opcode, funct3, and funct7 to mnemonic and inst type
 var instructionMap = map[instructionIdentifier]instructionData {
 	{"0110111", "", ""}: {"lui", "U"},
 	{"0010111", "", ""}: {"auipc", "U"},
@@ -259,13 +221,14 @@ var instructionMap = map[instructionIdentifier]instructionData {
 	{"0110011", "101", "0100000"}: {"sra", "R"}, 
 	{"0110011", "110", "0000000"}: {"or", "R"}, 
 	{"0110011", "111", "0000000"}: {"and", "R"}, 
-	{"0001111", "000", ""}: {"fence", ""}, 
-	{"", "", ""}: {"fence.tso", ""}, 
-	{"", "", ""}: {"pause", ""}, 
+	// {"0001111", "000", ""}: {"fence", ""}, 
+	// {"", "", ""}: {"fence.tso", ""}, 
+	// {"", "", ""}: {"pause", ""}, 
 	{"1110011", "000", ""}: {"ecall", "I"}, 
-	{"", "", ""}: {"ebreak", ""}, 
+	// {"", "", ""}: {"ebreak", ""}, 
 }
 
+// maps digit to register
 var registerMap = map[int]string{
 	0: "zero",
 	1:   "ra",

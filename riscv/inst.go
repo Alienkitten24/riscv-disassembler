@@ -9,5 +9,5 @@ type Inst struct {
 	Rs1  string
 	Rs2  string
 	Imm  int32
-	Opcode string
+	Opcode string // stores the opcode bits, ex for addi 0010011
 }

@@ -20,11 +20,6 @@ func NewInstPrinter(symbolTable *SymbolTable) *InstPrinter {
 func (p *InstPrinter) FormatInst(i *Inst) string {
 	
 	offset := uint32(int32(i.Addr) + i.Imm)
-	// fmt.Println("hola")
-	// fmt.Printf("%x\n", i.Addr)
-	// fmt.Printf("%x\n", int32(i.Addr))
-	// fmt.Printf("%x\n", i.Imm)
-	// fmt.Printf("%x\n", offset)
 	symbol := p.SymbolTable.GetSymbolAtAddress(offset)
 
 	switch i.Opcode {
@@ -35,6 +30,7 @@ func (p *InstPrinter) FormatInst(i *Inst) string {
 	case "1101111":  // jal
 		return fmt.Sprintf("%s\t%s,%x <%s>", i.Op, i.Rd, offset, symbol.Name)
 	case "1100111":  // jalr
+		return fmt.Sprintf("%s\t%s,%s,%s <%s>", i.Op, i.Rd, i.Rs1, offset, symbol.Name)
 	case "1100011":  // branches
 		return fmt.Sprintf("%s\t%s,%s,%x <%s>", i.Op, i.Rs1, i.Rs2, offset, symbol.Name)
 	case "0000011":  // loads
@@ -45,7 +41,7 @@ func (p *InstPrinter) FormatInst(i *Inst) string {
 		return fmt.Sprintf("%s\t%s,%s,%d", i.Op, i.Rd, i.Rs1, i.Imm)
 	case "0110011":  // reg arithmatic
 		return fmt.Sprintf("%s\t%s,%s,%s", i.Op, i.Rd, i.Rs1, i.Rs2)
-	case "0001111":  
+	// case "0001111":  // fence calls 
 	case "1110011":  // sys calls
 		return fmt.Sprintf("%s", i.Op)
 	}
